@@ -3,7 +3,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Check, X } from "lucide-react";
 
 interface Episode {
   show: string;
@@ -38,25 +40,10 @@ const Index = () => {
         try {
           const parsedEpisodes = lines.slice(1).map(line => {
             const [show, episode, title, originalAirDate, watched] = line.split(',').map(value => value.trim());
-            if (!show || !episode || !title || !originalAirDate || !watched) {
-              throw new Error('Missing required fields');
-            }
             return { show, episode, title, originalAirDate, watched };
           });
 
-          // Calculate statistics for each show
-          const stats: { [key: string]: { total: number; watched: number } } = {};
-          parsedEpisodes.forEach(ep => {
-            if (!stats[ep.show]) {
-              stats[ep.show] = { total: 0, watched: 0 };
-            }
-            stats[ep.show].total += 1;
-            if (ep.watched.toLowerCase() === 'true') {
-              stats[ep.show].watched += 1;
-            }
-          });
-
-          setShowStats(stats);
+          updateShowStats(parsedEpisodes);
           setEpisodes(parsedEpisodes);
           toast({
             title: "Success",
@@ -72,6 +59,35 @@ const Index = () => {
       };
       reader.readAsText(file);
     }
+  };
+
+  const updateShowStats = (eps: Episode[]) => {
+    const stats: { [key: string]: { total: number; watched: number } } = {};
+    eps.forEach(ep => {
+      if (!stats[ep.show]) {
+        stats[ep.show] = { total: 0, watched: 0 };
+      }
+      stats[ep.show].total += 1;
+      if (ep.watched.toLowerCase() === 'yes') {
+        stats[ep.show].watched += 1;
+      }
+    });
+    setShowStats(stats);
+  };
+
+  const toggleWatchedStatus = (index: number) => {
+    const updatedEpisodes = [...episodes];
+    updatedEpisodes[index] = {
+      ...updatedEpisodes[index],
+      watched: updatedEpisodes[index].watched.toLowerCase() === 'yes' ? 'no' : 'yes'
+    };
+    setEpisodes(updatedEpisodes);
+    updateShowStats(updatedEpisodes);
+    
+    toast({
+      title: "Status Updated",
+      description: `Episode marked as ${updatedEpisodes[index].watched}`,
+    });
   };
 
   return (
@@ -114,6 +130,7 @@ const Index = () => {
                 <TableHead>Title</TableHead>
                 <TableHead>Original Air Date</TableHead>
                 <TableHead>Watched</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -124,7 +141,20 @@ const Index = () => {
                   <TableCell>{episode.title}</TableCell>
                   <TableCell>{episode.originalAirDate}</TableCell>
                   <TableCell>
-                    {episode.watched.toLowerCase() === 'true' ? '✅' : '❌'}
+                    {episode.watched.toLowerCase() === 'yes' ? (
+                      <Check className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <X className="h-5 w-5 text-red-500" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleWatchedStatus(index)}
+                    >
+                      Mark as {episode.watched.toLowerCase() === 'yes' ? 'Unwatched' : 'Watched'}
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
