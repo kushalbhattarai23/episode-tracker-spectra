@@ -35,18 +35,6 @@ const Index = () => {
           return;
         }
 
-        const headers = lines[0].split(',').map(header => header.trim());
-        const expectedHeaders = ['SHOW', 'Episode', 'Title', 'Original air date', 'Watched'];
-        
-        if (headers.join(',') !== expectedHeaders.join(',')) {
-          toast({
-            title: "Invalid CSV Format",
-            description: "Please ensure your CSV has the correct headers: SHOW,Episode,Title,Original air date,Watched",
-            variant: "destructive",
-          });
-          return;
-        }
-
         try {
           const parsedEpisodes = lines.slice(1).map(line => {
             const [show, episode, title, originalAirDate, watched] = line.split(',').map(value => value.trim());
