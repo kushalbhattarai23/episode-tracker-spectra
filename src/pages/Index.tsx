@@ -43,11 +43,14 @@ const Index = () => {
             return { show, episode, title, originalAirDate, watched };
           });
 
-          updateShowStats(parsedEpisodes);
-          setEpisodes(parsedEpisodes);
+          // Sort episodes by watched status and air date
+          const sortedEpisodes = sortEpisodes(parsedEpisodes);
+
+          updateShowStats(sortedEpisodes);
+          setEpisodes(sortedEpisodes);
           toast({
             title: "Success",
-            description: `Imported ${parsedEpisodes.length} episodes`,
+            description: `Imported ${sortedEpisodes.length} episodes`,
           });
         } catch (error) {
           toast({
@@ -59,6 +62,19 @@ const Index = () => {
       };
       reader.readAsText(file);
     }
+  };
+
+  const sortEpisodes = (eps: Episode[]) => {
+    return [...eps].sort((a, b) => {
+      // First sort by watched status (unwatched first)
+      if (a.watched.toLowerCase() === 'yes' && b.watched.toLowerCase() !== 'yes') return 1;
+      if (a.watched.toLowerCase() !== 'yes' && b.watched.toLowerCase() === 'yes') return -1;
+      
+      // Then sort by original air date
+      const dateA = new Date(a.originalAirDate);
+      const dateB = new Date(b.originalAirDate);
+      return dateA.getTime() - dateB.getTime();
+    });
   };
 
   const updateShowStats = (eps: Episode[]) => {
@@ -81,8 +97,11 @@ const Index = () => {
       ...updatedEpisodes[index],
       watched: updatedEpisodes[index].watched.toLowerCase() === 'yes' ? 'no' : 'yes'
     };
-    setEpisodes(updatedEpisodes);
-    updateShowStats(updatedEpisodes);
+    
+    // Sort episodes after updating watched status
+    const sortedEpisodes = sortEpisodes(updatedEpisodes);
+    setEpisodes(sortedEpisodes);
+    updateShowStats(sortedEpisodes);
     
     toast({
       title: "Status Updated",
