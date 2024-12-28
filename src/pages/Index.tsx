@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Episode {
   show: string;
@@ -15,6 +16,7 @@ interface Episode {
 const Index = () => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [showStats, setShowStats] = useState<{ [key: string]: { total: number; watched: number } }>({});
+  const { toast } = useToast();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -22,33 +24,63 @@ const Index = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        const lines = text.split('\n');
-        const headers = lines[0].split(',');
+        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         
-        if (headers.join(',') !== 'SHOW,Episode,Title,Original air date,Watched') {
-          console.error('Invalid CSV format');
+        if (lines.length === 0) {
+          toast({
+            title: "Error",
+            description: "The CSV file is empty",
+            variant: "destructive",
+          });
           return;
         }
 
-        const parsedEpisodes = lines.slice(1).filter(line => line.trim()).map(line => {
-          const [show, episode, title, originalAirDate, watched] = line.split(',');
-          return { show, episode, title, originalAirDate, watched };
-        });
+        const headers = lines[0].split(',').map(header => header.trim());
+        const expectedHeaders = ['SHOW', 'Episode', 'Title', 'Original air date', 'Watched'];
+        
+        if (headers.join(',') !== expectedHeaders.join(',')) {
+          toast({
+            title: "Invalid CSV Format",
+            description: "Please ensure your CSV has the correct headers: SHOW,Episode,Title,Original air date,Watched",
+            variant: "destructive",
+          });
+          return;
+        }
 
-        // Calculate statistics for each show
-        const stats: { [key: string]: { total: number; watched: number } } = {};
-        parsedEpisodes.forEach(ep => {
-          if (!stats[ep.show]) {
-            stats[ep.show] = { total: 0, watched: 0 };
-          }
-          stats[ep.show].total += 1;
-          if (ep.watched.toLowerCase() === 'true') {
-            stats[ep.show].watched += 1;
-          }
-        });
+        try {
+          const parsedEpisodes = lines.slice(1).map(line => {
+            const [show, episode, title, originalAirDate, watched] = line.split(',').map(value => value.trim());
+            if (!show || !episode || !title || !originalAirDate || !watched) {
+              throw new Error('Missing required fields');
+            }
+            return { show, episode, title, originalAirDate, watched };
+          });
 
-        setShowStats(stats);
-        setEpisodes(parsedEpisodes);
+          // Calculate statistics for each show
+          const stats: { [key: string]: { total: number; watched: number } } = {};
+          parsedEpisodes.forEach(ep => {
+            if (!stats[ep.show]) {
+              stats[ep.show] = { total: 0, watched: 0 };
+            }
+            stats[ep.show].total += 1;
+            if (ep.watched.toLowerCase() === 'true') {
+              stats[ep.show].watched += 1;
+            }
+          });
+
+          setShowStats(stats);
+          setEpisodes(parsedEpisodes);
+          toast({
+            title: "Success",
+            description: `Imported ${parsedEpisodes.length} episodes`,
+          });
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to parse CSV data. Please check the file format.",
+            variant: "destructive",
+          });
+        }
       };
       reader.readAsText(file);
     }
