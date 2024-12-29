@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { Check, X, Trash2 } from "lucide-react";
 
 interface Episode {
   show: string;
@@ -19,6 +19,23 @@ const Index = () => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [showStats, setShowStats] = useState<{ [key: string]: { total: number; watched: number } }>({});
   const { toast } = useToast();
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedEpisodes = localStorage.getItem('episodes');
+    if (savedEpisodes) {
+      const parsedEpisodes = JSON.parse(savedEpisodes);
+      setEpisodes(parsedEpisodes);
+      updateShowStats(parsedEpisodes);
+    }
+  }, []);
+
+  // Save data to localStorage whenever episodes change
+  useEffect(() => {
+    if (episodes.length > 0) {
+      localStorage.setItem('episodes', JSON.stringify(episodes));
+    }
+  }, [episodes]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -109,9 +126,31 @@ const Index = () => {
     });
   };
 
+  const clearData = () => {
+    setEpisodes([]);
+    setShowStats({});
+    localStorage.removeItem('episodes');
+    toast({
+      title: "Data Cleared",
+      description: "All episode data has been cleared",
+    });
+  };
+
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Episode Tracker</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Episode Tracker</h1>
+        {episodes.length > 0 && (
+          <Button 
+            variant="destructive" 
+            onClick={clearData}
+            className="flex items-center gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            Clear Data
+          </Button>
+        )}
+      </div>
       
       <div className="mb-6">
         <Input
