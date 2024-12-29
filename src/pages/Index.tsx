@@ -137,89 +137,101 @@ const Index = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Episode Tracker</h1>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">
+            Episode Tracker
+          </h1>
+          {episodes.length > 0 && (
+            <Button 
+              variant="destructive" 
+              onClick={clearData}
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear Data
+            </Button>
+          )}
+        </div>
+        
+        <div className="mb-6">
+          <Input
+            type="file"
+            accept=".csv"
+            onChange={handleFileUpload}
+            className="max-w-md border-2 border-purple-200 focus:border-purple-400 rounded-lg"
+          />
+        </div>
+
+        {Object.entries(showStats).length > 0 && (
+          <div className="mb-6 space-y-4 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+            <h2 className="text-xl font-semibold text-purple-700 dark:text-purple-400">Show Progress</h2>
+            {Object.entries(showStats).map(([show, stats]) => (
+              <div key={show} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{show}</span>
+                  <span className="text-sm text-purple-600 dark:text-purple-400">
+                    {stats.watched} / {stats.total} episodes
+                  </span>
+                </div>
+                <Progress 
+                  value={(stats.watched / stats.total) * 100} 
+                  className="h-2 bg-purple-100"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
         {episodes.length > 0 && (
-          <Button 
-            variant="destructive" 
-            onClick={clearData}
-            className="flex items-center gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Clear Data
-          </Button>
+          <ScrollArea className="h-[600px] rounded-xl border border-purple-200 bg-white dark:bg-gray-800 shadow-lg">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-purple-50 dark:bg-gray-700">
+                  <TableHead className="text-purple-700 dark:text-purple-400">Show</TableHead>
+                  <TableHead className="text-purple-700 dark:text-purple-400">Episode</TableHead>
+                  <TableHead className="text-purple-700 dark:text-purple-400">Title</TableHead>
+                  <TableHead className="text-purple-700 dark:text-purple-400">Original Air Date</TableHead>
+                  <TableHead className="text-purple-700 dark:text-purple-400">Watched</TableHead>
+                  <TableHead className="text-purple-700 dark:text-purple-400">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {episodes.map((episode, index) => (
+                  <TableRow key={index} className="hover:bg-purple-50 dark:hover:bg-gray-700 transition-colors">
+                    <TableCell className="font-medium">{episode.show}</TableCell>
+                    <TableCell>{episode.episode}</TableCell>
+                    <TableCell>{episode.title}</TableCell>
+                    <TableCell>{episode.originalAirDate}</TableCell>
+                    <TableCell>
+                      {episode.watched.toLowerCase() === 'yes' ? (
+                        <Check className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <X className="h-5 w-5 text-red-500" />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleWatchedStatus(index)}
+                        className={`border-2 ${
+                          episode.watched.toLowerCase() === 'yes'
+                            ? 'border-purple-300 hover:border-purple-400 text-purple-600'
+                            : 'border-pink-300 hover:border-pink-400 text-pink-600'
+                        }`}
+                      >
+                        Mark as {episode.watched.toLowerCase() === 'yes' ? 'Unwatched' : 'Watched'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
         )}
       </div>
-      
-      <div className="mb-6">
-        <Input
-          type="file"
-          accept=".csv"
-          onChange={handleFileUpload}
-          className="max-w-md"
-        />
-      </div>
-
-      {Object.entries(showStats).length > 0 && (
-        <div className="mb-6 space-y-4">
-          <h2 className="text-xl font-semibold">Show Progress</h2>
-          {Object.entries(showStats).map(([show, stats]) => (
-            <div key={show} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">{show}</span>
-                <span className="text-sm text-muted-foreground">
-                  {stats.watched} / {stats.total} episodes
-                </span>
-              </div>
-              <Progress value={(stats.watched / stats.total) * 100} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {episodes.length > 0 && (
-        <ScrollArea className="h-[600px] rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Show</TableHead>
-                <TableHead>Episode</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Original Air Date</TableHead>
-                <TableHead>Watched</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {episodes.map((episode, index) => (
-                <TableRow key={index}>
-                  <TableCell>{episode.show}</TableCell>
-                  <TableCell>{episode.episode}</TableCell>
-                  <TableCell>{episode.title}</TableCell>
-                  <TableCell>{episode.originalAirDate}</TableCell>
-                  <TableCell>
-                    {episode.watched.toLowerCase() === 'yes' ? (
-                      <Check className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-500" />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleWatchedStatus(index)}
-                    >
-                      Mark as {episode.watched.toLowerCase() === 'yes' ? 'Unwatched' : 'Watched'}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </ScrollArea>
-      )}
     </div>
   );
 };
