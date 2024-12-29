@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Check, X, Trash2, Save } from "lucide-react";
+import { Trash2, Save } from "lucide-react";
 import Stats from "@/components/Stats";
 import { exportToCSV } from "@/utils/csvUtils";
+import { ShowProgress } from "@/components/ShowProgress";
+import { EpisodeList } from "@/components/EpisodeList";
 
 interface Episode {
   show: string;
@@ -22,7 +21,6 @@ const Index = () => {
   const [showStats, setShowStats] = useState<{ [key: string]: { total: number; watched: number } }>({});
   const { toast } = useToast();
 
-  // Load data from localStorage on component mount
   useEffect(() => {
     const savedEpisodes = localStorage.getItem('episodes');
     if (savedEpisodes) {
@@ -32,7 +30,6 @@ const Index = () => {
     }
   }, []);
 
-  // Save data to localStorage whenever episodes change
   useEffect(() => {
     if (episodes.length > 0) {
       localStorage.setItem('episodes', JSON.stringify(episodes));
@@ -62,9 +59,7 @@ const Index = () => {
             return { show, episode, title, originalAirDate, watched };
           });
 
-          // Sort episodes by watched status and air date
           const sortedEpisodes = sortEpisodes(parsedEpisodes);
-
           updateShowStats(sortedEpisodes);
           setEpisodes(sortedEpisodes);
           toast({
@@ -85,11 +80,9 @@ const Index = () => {
 
   const sortEpisodes = (eps: Episode[]) => {
     return [...eps].sort((a, b) => {
-      // First sort by watched status (unwatched first)
       if (a.watched.toLowerCase() === 'yes' && b.watched.toLowerCase() !== 'yes') return 1;
       if (a.watched.toLowerCase() !== 'yes' && b.watched.toLowerCase() === 'yes') return -1;
       
-      // Then sort by original air date
       const dateA = new Date(a.originalAirDate);
       const dateB = new Date(b.originalAirDate);
       return dateA.getTime() - dateB.getTime();
@@ -117,7 +110,6 @@ const Index = () => {
       watched: updatedEpisodes[index].watched.toLowerCase() === 'yes' ? 'no' : 'yes'
     };
     
-    // Sort episodes after updating watched status
     const sortedEpisodes = sortEpisodes(updatedEpisodes);
     setEpisodes(sortedEpisodes);
     updateShowStats(sortedEpisodes);
@@ -198,71 +190,14 @@ const Index = () => {
         </div>
 
         {Object.entries(showStats).length > 0 && (
-          <div className="mb-6 space-y-4 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
-            <h2 className="text-xl font-semibold text-purple-700 dark:text-purple-400">Show Progress</h2>
-            {Object.entries(showStats).map(([show, stats]) => (
-              <div key={show} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-gray-700 dark:text-gray-300">{show}</span>
-                  <span className="text-sm text-purple-600 dark:text-purple-400">
-                    {stats.watched} / {stats.total} episodes
-                  </span>
-                </div>
-                <Progress 
-                  value={(stats.watched / stats.total) * 100} 
-                  className="h-2 bg-purple-100"
-                />
-              </div>
-            ))}
-          </div>
+          <ShowProgress showStats={showStats} />
         )}
 
         {episodes.length > 0 && (
-          <ScrollArea className="h-[600px] rounded-xl border border-purple-200 bg-white dark:bg-gray-800 shadow-lg">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-purple-50 dark:bg-gray-700">
-                  <TableHead className="text-purple-700 dark:text-purple-400">Show</TableHead>
-                  <TableHead className="text-purple-700 dark:text-purple-400">Episode</TableHead>
-                  <TableHead className="text-purple-700 dark:text-purple-400">Title</TableHead>
-                  <TableHead className="text-purple-700 dark:text-purple-400">Original Air Date</TableHead>
-                  <TableHead className="text-purple-700 dark:text-purple-400">Watched</TableHead>
-                  <TableHead className="text-purple-700 dark:text-purple-400">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {episodes.map((episode, index) => (
-                  <TableRow key={index} className="hover:bg-purple-50 dark:hover:bg-gray-700 transition-colors">
-                    <TableCell className="font-medium">{episode.show}</TableCell>
-                    <TableCell>{episode.episode}</TableCell>
-                    <TableCell>{episode.title}</TableCell>
-                    <TableCell>{episode.originalAirDate}</TableCell>
-                    <TableCell>
-                      {episode.watched.toLowerCase() === 'yes' ? (
-                        <Check className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <X className="h-5 w-5 text-red-500" />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleWatchedStatus(index)}
-                        className={`border-2 ${
-                          episode.watched.toLowerCase() === 'yes'
-                            ? 'border-purple-300 hover:border-purple-400 text-purple-600'
-                            : 'border-pink-300 hover:border-pink-400 text-pink-600'
-                        }`}
-                      >
-                        Mark as {episode.watched.toLowerCase() === 'yes' ? 'Unwatched' : 'Watched'}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+          <EpisodeList 
+            episodes={episodes}
+            toggleWatchedStatus={toggleWatchedStatus}
+          />
         )}
       </div>
     </div>
