@@ -5,8 +5,9 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Check, X, Trash2 } from "lucide-react";
+import { Check, X, Trash2, Save } from "lucide-react";
 import Stats from "@/components/Stats";
+import { exportToCSV } from "@/utils/csvUtils";
 
 interface Episode {
   show: string;
@@ -144,6 +145,14 @@ const Index = () => {
     return { totalEpisodes, watchedEpisodes, totalShows: uniqueShows };
   };
 
+  const handleSaveCSV = () => {
+    exportToCSV(episodes);
+    toast({
+      title: "Success",
+      description: "Episodes exported to CSV",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto p-6">
@@ -151,16 +160,28 @@ const Index = () => {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">
             Episode Tracker
           </h1>
-          {episodes.length > 0 && (
-            <Button 
-              variant="destructive" 
-              onClick={clearData}
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-600"
-            >
-              <Trash2 className="h-4 w-4" />
-              Clear Data
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {episodes.length > 0 && (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={handleSaveCSV}
+                  className="flex items-center gap-2 border-purple-200 hover:border-purple-300 text-purple-600"
+                >
+                  <Save className="h-4 w-4" />
+                  Save CSV
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={clearData}
+                  className="flex items-center gap-2 bg-red-500 hover:bg-red-600"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Clear Data
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {episodes.length > 0 && (
