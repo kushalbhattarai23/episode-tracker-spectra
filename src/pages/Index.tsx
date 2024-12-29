@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Check, X, Trash2 } from "lucide-react";
+import Stats from "@/components/Stats";
 
 interface Episode {
   show: string;
@@ -136,6 +137,13 @@ const Index = () => {
     });
   };
 
+  const calculateStats = (eps: Episode[]) => {
+    const totalEpisodes = eps.length;
+    const watchedEpisodes = eps.filter(ep => ep.watched.toLowerCase() === 'yes').length;
+    const uniqueShows = new Set(eps.map(ep => ep.show)).size;
+    return { totalEpisodes, watchedEpisodes, totalShows: uniqueShows };
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto p-6">
@@ -154,6 +162,10 @@ const Index = () => {
             </Button>
           )}
         </div>
+
+        {episodes.length > 0 && (
+          <Stats {...calculateStats(episodes)} />
+        )}
         
         <div className="mb-6">
           <Input
