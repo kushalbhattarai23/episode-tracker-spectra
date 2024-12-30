@@ -6,7 +6,7 @@ import { Trash2, Save } from "lucide-react";
 import Stats from "@/components/Stats";
 import { exportToCSV } from "@/utils/csvUtils";
 import { ShowProgress } from "@/components/ShowProgress";
-import { EpisodeList } from "@/components/EpisodeList";
+import { ShowDetails } from "@/components/ShowDetails";
 import { parseCSV } from "@/utils/csvParser";
 
 interface Episode {
@@ -20,6 +20,7 @@ interface Episode {
 const Index = () => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [showStats, setShowStats] = useState<{ [key: string]: { total: number; watched: number } }>({});
+  const [selectedShow, setSelectedShow] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -129,6 +130,7 @@ const Index = () => {
   const clearData = () => {
     setEpisodes([]);
     setShowStats({});
+    setSelectedShow(null);
     localStorage.removeItem('episodes');
     toast({
       title: "Data Cleared",
@@ -195,15 +197,27 @@ const Index = () => {
           />
         </div>
 
-        {Object.entries(showStats).length > 0 && (
-          <ShowProgress showStats={showStats} />
+        {Object.entries(showStats).length > 0 && !selectedShow && (
+          <ShowProgress 
+            showStats={showStats} 
+            onShowSelect={setSelectedShow}
+          />
         )}
 
-        {episodes.length > 0 && (
-          <EpisodeList 
+        {selectedShow ? (
+          <ShowDetails 
+            selectedShow={selectedShow}
             episodes={episodes}
+            showStats={showStats}
             toggleWatchedStatus={toggleWatchedStatus}
+            onBack={() => setSelectedShow(null)}
           />
+        ) : (
+          episodes.length > 0 && (
+            <div className="text-center text-gray-600 dark:text-gray-400 mt-4">
+              Click on a show above to view its episodes
+            </div>
+          )
         )}
       </div>
     </div>
