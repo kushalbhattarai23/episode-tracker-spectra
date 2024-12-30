@@ -7,6 +7,7 @@ import Stats from "@/components/Stats";
 import { exportToCSV } from "@/utils/csvUtils";
 import { ShowProgress } from "@/components/ShowProgress";
 import { EpisodeList } from "@/components/EpisodeList";
+import { parseCSV } from "@/utils/csvParser";
 
 interface Episode {
   show: string;
@@ -42,50 +43,13 @@ const Index = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        // Split by newline and filter out empty lines
-        const lines = text.split('\n')
-          .map(line => line.trim())
-          .filter(line => line.length > 0);
-        
-        if (lines.length === 0) {
-          toast({
-            title: "Error",
-            description: "The CSV file is empty",
-            variant: "destructive",
-          });
-          return;
-        }
-
         try {
-          // Skip header row and parse remaining lines
-          const parsedEpisodes = lines.slice(1).map(line => {
-            // Split by comma but handle possible quoted values
-            const values = line.split(',').map(value => {
-              const trimmed = value.trim();
-              // Remove quotes if present
-              return trimmed.startsWith('"') && trimmed.endsWith('"') 
-                ? trimmed.slice(1, -1) 
-                : trimmed;
-            });
-
-            if (values.length !== 5) {
-              throw new Error(`Invalid line format: ${line}`);
-            }
-
-            const [show, episode, title, originalAirDate, watched] = values;
-            return {
-              show,
-              episode,
-              title,
-              originalAirDate,
-              watched: watched.toLowerCase()
-            };
-          });
-
+          const parsedEpisodes = parseCSV(text);
+          
           if (parsedEpisodes.length === 0) {
             toast({
               title: "Error",
-              description: "No valid episodes found in the CSV file",
+              description: "No episodes found in the file",
               variant: "destructive",
             });
             return;
@@ -102,7 +66,7 @@ const Index = () => {
           console.error('CSV parsing error:', error);
           toast({
             title: "Error",
-            description: "Failed to parse CSV data. Please ensure the file format is correct: show,episode,title,originalAirDate,watched",
+            description: "Failed to read the file content",
             variant: "destructive",
           });
         }
@@ -245,5 +209,3 @@ const Index = () => {
     </div>
   );
 };
-
-export default Index;
