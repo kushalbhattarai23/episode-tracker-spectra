@@ -7,6 +7,7 @@ import Stats from "@/components/Stats";
 import { exportToCSV } from "@/utils/csvUtils";
 import { ShowProgress } from "@/components/ShowProgress";
 import { ShowDetails } from "@/components/ShowDetails";
+import { EpisodeList } from "@/components/EpisodeList";
 import { parseCSV } from "@/utils/csvParser";
 
 interface Episode {
@@ -21,6 +22,7 @@ const Index = () => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [showStats, setShowStats] = useState<{ [key: string]: { total: number; watched: number } }>({});
   const [selectedShow, setSelectedShow] = useState<string | null>(null);
+  const [viewAllShows, setViewAllShows] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -83,6 +85,16 @@ const Index = () => {
 
       reader.readAsText(file);
     }
+  };
+
+  const handleViewAllShows = () => {
+    setSelectedShow(null);
+    setViewAllShows(true);
+  };
+
+  const handleShowSelect = (show: string) => {
+    setSelectedShow(show);
+    setViewAllShows(false);
   };
 
   const sortEpisodes = (eps: Episode[]) => {
@@ -197,10 +209,11 @@ const Index = () => {
           />
         </div>
 
-        {Object.entries(showStats).length > 0 && !selectedShow && (
+        {Object.entries(showStats).length > 0 && !selectedShow && !viewAllShows && (
           <ShowProgress 
             showStats={showStats} 
-            onShowSelect={setSelectedShow}
+            onShowSelect={handleShowSelect}
+            onViewAllShows={handleViewAllShows}
           />
         )}
 
@@ -210,8 +223,31 @@ const Index = () => {
             episodes={episodes}
             showStats={showStats}
             toggleWatchedStatus={toggleWatchedStatus}
-            onBack={() => setSelectedShow(null)}
+            onBack={() => {
+              setSelectedShow(null);
+              setViewAllShows(false);
+            }}
           />
+        ) : viewAllShows ? (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-purple-700 dark:text-purple-400">
+                All Episodes
+              </h2>
+              <Button 
+                variant="outline" 
+                onClick={() => setViewAllShows(false)}
+                className="border-purple-200 hover:border-purple-300 text-purple-600"
+              >
+                Back to Shows
+              </Button>
+            </div>
+            <EpisodeList 
+              episodes={episodes}
+              toggleWatchedStatus={toggleWatchedStatus}
+              showTitle={true}
+            />
+          </div>
         ) : (
           episodes.length > 0 && (
             <div className="text-center text-gray-600 dark:text-gray-400 mt-4">

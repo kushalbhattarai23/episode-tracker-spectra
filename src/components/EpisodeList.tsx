@@ -14,9 +14,10 @@ interface Episode {
 interface EpisodeListProps {
   episodes: Episode[];
   toggleWatchedStatus: (index: number) => void;
+  showTitle?: boolean;
 }
 
-export const EpisodeList = ({ episodes, toggleWatchedStatus }: EpisodeListProps) => {
+export const EpisodeList = ({ episodes, toggleWatchedStatus, showTitle = true }: EpisodeListProps) => {
   return (
     <ScrollArea className="h-[600px] rounded-xl border border-purple-200 bg-white dark:bg-gray-800 shadow-lg">
       <div className="space-y-4 p-4">
@@ -26,10 +27,12 @@ export const EpisodeList = ({ episodes, toggleWatchedStatus }: EpisodeListProps)
             className="bg-white dark:bg-gray-800 rounded-lg border border-purple-200 p-4 hover:bg-purple-50 dark:hover:bg-gray-700 transition-colors"
           >
             <div className="grid grid-cols-1 gap-2">
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-purple-700 dark:text-purple-400">Show</span>
-                <span>{episode.show}</span>
-              </div>
+              {showTitle && (
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-purple-700 dark:text-purple-400">Show</span>
+                  <span>{episode.show}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-purple-700 dark:text-purple-400">Episode</span>
                 <span>{episode.episode}</span>
