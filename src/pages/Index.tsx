@@ -42,7 +42,10 @@ const Index = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        // Split by newline and filter out empty lines
+        const lines = text.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0);
         
         if (lines.length === 0) {
           toast({
@@ -54,10 +57,39 @@ const Index = () => {
         }
 
         try {
+          // Skip header row and parse remaining lines
           const parsedEpisodes = lines.slice(1).map(line => {
-            const [show, episode, title, originalAirDate, watched] = line.split(',').map(value => value.trim());
-            return { show, episode, title, originalAirDate, watched };
+            // Split by comma but handle possible quoted values
+            const values = line.split(',').map(value => {
+              const trimmed = value.trim();
+              // Remove quotes if present
+              return trimmed.startsWith('"') && trimmed.endsWith('"') 
+                ? trimmed.slice(1, -1) 
+                : trimmed;
+            });
+
+            if (values.length !== 5) {
+              throw new Error(`Invalid line format: ${line}`);
+            }
+
+            const [show, episode, title, originalAirDate, watched] = values;
+            return {
+              show,
+              episode,
+              title,
+              originalAirDate,
+              watched: watched.toLowerCase()
+            };
           });
+
+          if (parsedEpisodes.length === 0) {
+            toast({
+              title: "Error",
+              description: "No valid episodes found in the CSV file",
+              variant: "destructive",
+            });
+            return;
+          }
 
           const sortedEpisodes = sortEpisodes(parsedEpisodes);
           updateShowStats(sortedEpisodes);
@@ -67,13 +99,23 @@ const Index = () => {
             description: `Imported ${sortedEpisodes.length} episodes`,
           });
         } catch (error) {
+          console.error('CSV parsing error:', error);
           toast({
             title: "Error",
-            description: "Failed to parse CSV data. Please check the file format.",
+            description: "Failed to parse CSV data. Please ensure the file format is correct: show,episode,title,originalAirDate,watched",
             variant: "destructive",
           });
         }
       };
+
+      reader.onerror = () => {
+        toast({
+          title: "Error",
+          description: "Failed to read the file",
+          variant: "destructive",
+        });
+      };
+
       reader.readAsText(file);
     }
   };
