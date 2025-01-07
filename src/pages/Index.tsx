@@ -69,18 +69,55 @@ const Index = () => {
           console.error('CSV parsing error:', error);
           toast({
             title: "Error",
-            description: "Failed to read the file content",
+            description: "Failed to read the CSV file",
             variant: "destructive",
           });
         }
       };
 
-      reader.onerror = () => {
-        toast({
-          title: "Error",
-          description: "Failed to read the file",
-          variant: "destructive",
-        });
+      reader.readAsText(file);
+    }
+  };
+
+  const handleJSONUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const jsonData = JSON.parse(e.target?.result as string);
+          const validatedEpisodes = jsonData.map((item: any) => ({
+            show: item.show || 'Unknown Show',
+            episode: item.episode || 'Unknown Episode',
+            title: item.title || 'Unknown Title',
+            originalAirDate: item.originalAirDate || 'N/A',
+            watched: item.watched?.toLowerCase() === 'yes' ? 'yes' : 'no'
+          }));
+
+          if (validatedEpisodes.length === 0) {
+            toast({
+              title: "Error",
+              description: "No episodes found in the JSON file",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const sortedEpisodes = sortEpisodes(validatedEpisodes);
+          updateShowStats(sortedEpisodes);
+          setEpisodes(sortedEpisodes);
+          toast({
+            title: "Success",
+            description: `Imported ${sortedEpisodes.length} episodes from JSON`,
+          });
+        } catch (error) {
+          console.error('JSON parsing error:', error);
+          toast({
+            title: "Error",
+            description: "Failed to read the JSON file",
+            variant: "destructive",
+          });
+        }
       };
 
       reader.readAsText(file);
@@ -200,13 +237,31 @@ const Index = () => {
           <Stats {...calculateStats(episodes)} />
         )}
         
-        <div className="mb-6">
-          <Input
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="max-w-md border-2 border-purple-200 focus:border-purple-400 rounded-lg"
-          />
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Import CSV File
+              </label>
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="max-w-md border-2 border-purple-200 focus:border-purple-400 rounded-lg"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Import JSON File
+              </label>
+              <Input
+                type="file"
+                accept=".json"
+                onChange={handleJSONUpload}
+                className="max-w-md border-2 border-purple-200 focus:border-purple-400 rounded-lg"
+              />
+            </div>
+          </div>
         </div>
 
         {Object.entries(showStats).length > 0 && !selectedShow && !viewAllShows && (
