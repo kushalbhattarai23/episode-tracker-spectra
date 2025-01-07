@@ -9,6 +9,7 @@ import { ShowProgress } from "@/components/ShowProgress";
 import { ShowDetails } from "@/components/ShowDetails";
 import { EpisodeList } from "@/components/EpisodeList";
 import { parseCSV } from "@/utils/csvParser";
+import { convertJSONtoCSV } from "@/utils/jsonToCsv";
 
 interface Episode {
   show: string;
@@ -86,15 +87,9 @@ const Index = () => {
       reader.onload = (e) => {
         try {
           const jsonData = JSON.parse(e.target?.result as string);
-          const validatedEpisodes = jsonData.map((item: any) => ({
-            show: item.show || 'Unknown Show',
-            episode: item.episode || 'Unknown Episode',
-            title: item.title || 'Unknown Title',
-            originalAirDate: item.originalAirDate || 'N/A',
-            watched: item.watched?.toLowerCase() === 'yes' ? 'yes' : 'no'
-          }));
+          const convertedData = convertJSONtoCSV(jsonData);
 
-          if (validatedEpisodes.length === 0) {
+          if (convertedData.length === 0) {
             toast({
               title: "Error",
               description: "No episodes found in the JSON file",
@@ -103,12 +98,12 @@ const Index = () => {
             return;
           }
 
-          const sortedEpisodes = sortEpisodes(validatedEpisodes);
+          const sortedEpisodes = sortEpisodes(convertedData);
           updateShowStats(sortedEpisodes);
           setEpisodes(sortedEpisodes);
           toast({
             title: "Success",
-            description: `Imported ${sortedEpisodes.length} episodes from JSON`,
+            description: `Imported ${sortedEpisodes.length} episodes from JSON (converted to CSV format)`,
           });
         } catch (error) {
           console.error('JSON parsing error:', error);
